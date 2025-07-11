@@ -86,5 +86,66 @@ public class MonoTest {
           subscription.request(1);
         }
     );
+
+
+    logger.info("--------------------------------------");
+    StepVerifier.create(mono)
+        .expectNext("HELLO")
+        .verifyComplete();
+  }
+
+  @Test
+  void monoDoOnMethods() {
+    Mono<String> mono = Mono.just("Hello")
+        //.log()
+
+        .doOnSubscribe(s -> logger.info("doOnSubscribe1 {} ", s))
+        .doOnRequest(n -> logger.info("doOnRequest Requested {}", n))
+        .doOnNext(s -> logger.info("doOnNext 1 {}", s))
+        .map(String::toUpperCase)
+        .doOnSubscribe(s -> logger.info("doOnSubscribe2 {} ", s))
+        .doOnNext(s -> logger.info("doOnNext 2 {}", s))
+        .doOnSuccess(s -> logger.info("doOnSuccess on {} items", s));
+
+    mono.subscribe(s -> logger.info("Value {}", s));
+
+  }
+
+  @Test
+  void monoDoOnError() {
+    Mono<Object> mono = Mono.error(new RuntimeException("ooo"))
+        .doOnError(e -> logger.info("doOnError {} ", e.getMessage()))
+        .log();
+
+
+    StepVerifier.create(mono)
+        .expectError(RuntimeException.class)
+        .verify();
+
+  }
+
+  @Test
+  void monoOnErrorResume() {
+    Mono<Object> mono = Mono.error(new RuntimeException("ooo"))
+        .onErrorResume(e -> Mono.just(e.getMessage().toUpperCase()))
+        .log();
+
+
+    StepVerifier.create(mono)
+        .expectNext("OOO")
+        .verifyComplete();
+  }
+
+
+  @Test
+  void monoOnErrorReturn() {
+    Mono<Object> mono = Mono.error(new RuntimeException("ooo"))
+        .onErrorReturn( "fallback")
+        .log();
+
+
+    StepVerifier.create(mono)
+        .expectNext("fallback")
+        .verifyComplete();
   }
 }
