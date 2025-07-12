@@ -1,9 +1,17 @@
 package com.example.demo;
 
 public class SingleResponse implements Response {
-  private final Result result;
+  private  Result result;
   public SingleResponse(Result result) {
     this.result = result;
+  }
+
+  public SingleResponse() {
+
+  }
+  public SingleResponse setResult(Result result) {
+    this.result = result;
+    return this;
   }
 
   public Result getResult() {

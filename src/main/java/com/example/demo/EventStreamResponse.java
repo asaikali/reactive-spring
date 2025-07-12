@@ -12,6 +12,14 @@ public class EventStreamResponse implements Response {
     events.add(object);
   }
 
+  void onComplete() {
+    // call sse emitter to close connecion
+  }
+
+  void onError() {
+    // log error and close SSE connection
+  }
+
   public List<Object> getEvents() {
     return events;
   }
