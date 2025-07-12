@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.example.demo2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ public final class EventStreamResponse implements Response {
     // call sse emitter to close connecion
   }
 
-  void onError(Throwable throwable) {
+  void onError() {
     // log error and close SSE connection
   }
 

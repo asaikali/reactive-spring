@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.example.demo2;
 
 import java.security.SecureRandom;
 import java.util.List;
@@ -26,10 +26,8 @@ public class RemoteService {
       response.add(result);
       response.add("extra");
 
-      System.out.println("Generated notification: " + response);
       return Flux.fromIterable(response);
     } else {
-      System.out.println("Generated result: " + result);
       return Flux.just(result, "extra");
     }
   }
