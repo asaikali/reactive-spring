@@ -28,7 +28,6 @@ public class RequestProcessor {
             // Process first element
             if (o instanceof Result result) {
               SimpleResponse response = new SimpleResponse(result);
-              response.firstEventIsResult(result);
               responseRef.set(response);
               return false; // Stop for single response
             } else if (o instanceof Notification notification) {

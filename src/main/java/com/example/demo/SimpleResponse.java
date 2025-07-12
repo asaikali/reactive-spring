@@ -17,12 +17,8 @@ class SimpleResponse {
   }
 
   SimpleResponse(Result result) {
-    this.singleResponse = new SingleResponse();
+    this.singleResponse = new SingleResponse(result);
     this.eventStreamResponse = null;
-  }
-
-  void firstEventIsResult(Result result) {
-    this.singleResponse.setResult(result);
   }
 
   void event(Result result) {
