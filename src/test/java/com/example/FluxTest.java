@@ -298,4 +298,88 @@ public class FluxTest {
     defer.subscribe(atomicLong::set);
     Assertions.assertTrue(atomicLong.get() > 0);
   }
+
+
+  @Test
+  void fluxContact() {
+    Flux<String> flux1 = Flux.just("a","b");
+    Flux<String> flux2 = Flux.just("c","d");
+
+    Flux<String> contactFlux = Flux.concat(flux1, flux2).log();
+
+    StepVerifier.create(contactFlux)
+        .expectSubscription()
+        .expectNext("a","b","c", "d")
+        .verifyComplete();
+  }
+
+  @Test
+  void fluxContactOperator() {
+    Flux<String> flux1 = Flux.just("a","b");
+    Flux<String> flux2 = Flux.just("c","d");
+
+    Flux<String> contactFlux = flux1.concatWith(flux2).log();
+
+    StepVerifier.create(contactFlux)
+        .expectSubscription()
+        .expectNext("a","b","c", "d")
+        .verifyComplete();
+  }
+
+  @Test
+  void combineLast() {
+    Flux<String> flux1 = Flux.just("a","b");
+    Flux<String> flux2 = Flux.just("c","d");
+
+    Flux<String> combinedFlux = Flux.combineLatest( flux1, flux2, (s1, s2) -> s1.toUpperCase( )+ " " + s2.toUpperCase()).log();
+
+    combinedFlux.subscribe(s -> logger.info("Value {}", s));
+  }
+
+
+  @Test
+  void fluxMergeOperator() {
+    Flux<String> flux1 = Flux.just("a","b").delayElements(Duration.ofMillis(200));
+    Flux<String> flux2 = Flux.just("c","d");
+
+    Flux<String> meregFlux = Flux.merge(flux1,flux2).log();
+
+    StepVerifier.create(meregFlux)
+        .expectSubscription()
+        .expectNext("c", "d","a","b")
+        .verifyComplete();
+  }
+
+  @Test
+  void fluxMergeSequentialOperator() {
+    Flux<String> flux1 = Flux.just("a","b").delayElements(Duration.ofMillis(200));
+    Flux<String> flux2 = Flux.just("c","d");
+
+    Flux<String> meregFlux = Flux.mergeSequential(flux1,flux2,flux1).log();
+
+    StepVerifier.create(meregFlux)
+        .expectSubscription()
+        .expectNext("a", "b","c","d","a","b")
+        .verifyComplete();
+  }
+
+
+
+  @Test
+  void fluxContactError() {
+    Flux<String> flux1 = Flux.just("a","b")
+        .map( s -> {
+          if( s.equals("b")) throw new RuntimeException();
+          return s;
+        });
+    Flux<String> flux2 = Flux.just("c","d");
+
+    Flux<String> contactFlux = Flux.concatDelayError(flux1, flux2).log();
+
+    StepVerifier.create(contactFlux)
+        .expectSubscription()
+        .expectNext("a","b","c")
+        .expectError()
+        .verify();
+  }
 }
