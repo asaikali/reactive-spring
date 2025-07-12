@@ -1,5 +1,4 @@
 package com.example.demo;
 
-public interface Response {
-
+public sealed interface Response permits SingleResponse,EventStreamResponse {
 }

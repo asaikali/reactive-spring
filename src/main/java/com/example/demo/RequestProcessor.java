@@ -4,9 +4,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 public class RequestProcessor {
 
@@ -18,6 +16,62 @@ public class RequestProcessor {
 
   public Response post(String message) {
     Flux<Object> flux = remoteService.doSomething();
+
+    AtomicReference<DynamicResponse> responseRef = new AtomicReference<>();
+
+    flux.index((index, o) -> {
+          if (index == 0) {
+            if (o instanceof Result result) {
+              DynamicResponse response = DynamicResponse.forSingle();
+              response.result(result);
+              responseRef.set(response);
+            } else if (o instanceof Notification notification) {
+              DynamicResponse response = DynamicResponse.forStreaming();
+              response.notification(notification);
+              responseRef.set(response);
+            }
+          }
+          return o;
+        })
+        .skip(1) // Skip the first element since we already processed it
+        .takeWhile(o -> {
+          DynamicResponse response = responseRef.get();
+          if (response == null) return false;
+
+          if (o instanceof Result result) {
+            if (response.isSingle()) {
+              return false; // First element was a Result - stop
+            } else {
+              response.result(result); // This calls onEvent + complete
+              return false;
+            }
+          } else if (o instanceof Notification notification) {
+            response.notification(notification);
+            return true; // Continue streaming
+          } else {
+            return false; // Stop on unknown types
+          }
+        })
+        .doOnComplete(() -> {
+          DynamicResponse response = responseRef.get();
+          if (response != null && !response.isSingle()) {
+            response.complete();
+          }
+        })
+        .doOnError(throwable -> {
+          DynamicResponse response = responseRef.get();
+          if (response != null) {
+            response.error(throwable);
+          }
+        })
+        .subscribe();
+
+    return responseRef.get().getResponse();
+  }
+
+  public Response post8(String message) {
+    Flux<Object> flux = remoteService.doSomething();
+
 
     final SingleResponse singleResponse = new  SingleResponse();
     final EventStreamResponse eventStreamResponse = new EventStreamResponse();
@@ -40,7 +94,7 @@ public class RequestProcessor {
             } else {
               // Result after notifications - add to stream and stop
               eventStreamResponse.onEvent(result);
-              eventStreamResponse.onComplete();
+              eventStreamResponse.complete();
               return false;
             }
           } else if (o instanceof Notification notification) {
@@ -53,7 +107,7 @@ public class RequestProcessor {
         .doOnComplete(() -> {
           // Only call onComplete if stream ended naturally (no Result)
           if (singleResponse.getResult() == null) {
-            eventStreamResponse.onComplete();
+            eventStreamResponse.complete();
           }
         })
         .subscribe();
@@ -89,7 +143,7 @@ public class RequestProcessor {
         })
         .doOnComplete(() -> {
           EventStreamResponse stream = streamRef.get();
-          if (stream != null) stream.onComplete();
+          if (stream != null) stream.complete();
         })
         .blockFirst();
   }

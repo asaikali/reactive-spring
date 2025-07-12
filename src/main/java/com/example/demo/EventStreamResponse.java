@@ -3,7 +3,7 @@ package com.example.demo;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EventStreamResponse implements Response {
+public final class EventStreamResponse implements Response {
 
   private List<Object> events = new ArrayList<>();
   public EventStreamResponse() {}
@@ -12,7 +12,7 @@ public class EventStreamResponse implements Response {
     events.add(object);
   }
 
-  void onComplete() {
+  void complete() {
     // call sse emitter to close connecion
   }
 

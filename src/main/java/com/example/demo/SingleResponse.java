@@ -1,6 +1,6 @@
 package com.example.demo;
 
-public class SingleResponse implements Response {
+public final class SingleResponse implements Response {
   private  Result result;
   public SingleResponse(Result result) {
     this.result = result;
